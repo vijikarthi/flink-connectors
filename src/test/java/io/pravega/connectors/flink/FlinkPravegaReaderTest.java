@@ -9,6 +9,7 @@
  */
 package io.pravega.connectors.flink;
 
+import io.pravega.connectors.flink.functions.FailAtCheckpointFunction;
 import io.pravega.connectors.flink.utils.FailingMapper;
 import io.pravega.connectors.flink.utils.IntSequenceExactlyOnceValidator;
 import io.pravega.connectors.flink.utils.NotifyingMapper;
@@ -24,9 +25,9 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.flink.api.common.restartstrategy.RestartStrategies;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.util.StreamingMultipleProgramsTestBase;
 import org.apache.flink.streaming.util.serialization.AbstractDeserializationSchema;
 
+import org.apache.flink.test.util.AbstractTestBase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -42,7 +43,7 @@ import java.util.concurrent.TimeUnit;
  * Automated tests for {@link FlinkPravegaReader}.
  */
 @Slf4j
-public class FlinkPravegaReaderTest extends StreamingMultipleProgramsTestBase {
+public class FlinkPravegaReaderTest extends AbstractTestBase {
 
     // Number of events to produce into the test stream.
     private static final int NUM_STREAM_ELEMENTS = 10000;
@@ -53,7 +54,7 @@ public class FlinkPravegaReaderTest extends StreamingMultipleProgramsTestBase {
     //Ensure each test completes within 120 seconds.
     @Rule
     public final Timeout globalTimeout = new Timeout(120, TimeUnit.SECONDS);
-    
+
     @BeforeClass
     public static void setupPravega() throws Exception {
         SETUP_UTILS.startAllServices();
@@ -101,7 +102,7 @@ public class FlinkPravegaReaderTest extends StreamingMultipleProgramsTestBase {
                 // create the producer that writes to the stream
                 final ThrottledIntegerWriter producer = new ThrottledIntegerWriter(
                         eventWriter,
-                        numElements,
+                        numElements + 1,
                         numElements / 2,  // the latest when a checkpoint must have happened
                         1                 // the initial sleep time per element
                 )
@@ -139,6 +140,10 @@ public class FlinkPravegaReaderTest extends StreamingMultipleProgramsTestBase {
 
             env
                     .addSource(pravegaSource)
+
+                    // this mapper throws an exception at checkpoint time
+                    .map(new FailAtCheckpointFunction<>())
+                    .setParallelism(1)
 
                     // this mapper throws an exception at 2/3rd of the data stream,
                     // which is strictly after the checkpoint happened (the latest at 1/2 of the stream)

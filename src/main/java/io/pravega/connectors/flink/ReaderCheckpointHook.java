@@ -13,12 +13,13 @@ import io.pravega.client.admin.ReaderGroupManager;
 import io.pravega.client.stream.Checkpoint;
 import io.pravega.client.stream.ReaderGroup;
 
+import io.pravega.client.stream.ReaderGroupConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.runtime.checkpoint.MasterTriggerRestoreHook;
 
-import java.net.URI;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -48,21 +49,30 @@ class ReaderCheckpointHook implements MasterTriggerRestoreHook<Checkpoint> {
     /** The serializer for Pravega checkpoints, to store them in Flink checkpoints */
     private final CheckpointSerializer checkpointSerializer;
 
+    private final ReaderGroupConfig groupConfig;
+
+    private final ReaderGroupManager readerGroupManager;
+
     /** The reader group used to trigger and restore pravega checkpoints */
-    private final ReaderGroup readerGroup;
+    private volatile ReaderGroup readerGroup;
 
     /** The timeout on the future returned by the 'initiateCheckpoint()' call */
     private final long triggerTimeout;
 
+    private final Set<String> streamNames;
 
-    ReaderCheckpointHook(String readerName, String readerGroupName,
-                         String scope, URI controllerURI,
+    ReaderCheckpointHook(String readerName, ReaderGroupManager readerGroupManager,
+                         String readerGroupName, ReaderGroupConfig groupConfig, Set<String> streamNames,
                          long triggerTimeout) {
 
         this.readerName = checkNotNull(readerName);
+        this.groupConfig = checkNotNull(groupConfig);
         this.triggerTimeout = triggerTimeout;
         this.checkpointSerializer = new CheckpointSerializer();
-        this.readerGroup = ReaderGroupManager.withScope(scope, controllerURI).getReaderGroup(readerGroupName);
+        this.readerGroupManager = checkNotNull(readerGroupManager);
+        this.streamNames = checkNotNull(streamNames);
+
+        this.readerGroup = readerGroupManager.getReaderGroup(readerGroupName);
     }
 
     // ------------------------------------------------------------------------
@@ -70,6 +80,20 @@ class ReaderCheckpointHook implements MasterTriggerRestoreHook<Checkpoint> {
     @Override
     public String getIdentifier() {
         return this.readerName;
+    }
+
+    @Override
+    public void initializeState(HookInitializationContext hookInitializationContext) throws Exception {
+
+        // Initialize the reader group to the initial state based on application parameters.
+        // A checkpoint may subsequently be restored.
+        log.info("Resetting reader group {} to its initial configuration.", readerGroup.getGroupName());
+        readerGroup.updateConfig(this.groupConfig, streamNames);
+    }
+
+    @Override
+    public void close() {
+        readerGroupManager.close();
     }
 
     @Override

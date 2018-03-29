@@ -17,14 +17,15 @@ import io.pravega.connectors.flink.utils.SetupUtils;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
-import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.runtime.client.JobExecutionException;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
+import org.apache.flink.types.Row;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -69,7 +70,7 @@ public class FlinkTableITCase {
     }
 
     // The relational schema associated with SampleRecord.
-    private static final RowTypeInfo SAMPLE_SCHEMA = Types.ROW_NAMED(
+    private static final TypeInformation<Row> SAMPLE_SCHEMA = Types.ROW_NAMED(
             new String[]{"category", "value"},
             Types.STRING, Types.INT);
 

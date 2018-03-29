@@ -31,6 +31,7 @@ import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.util.FlinkException;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -65,13 +66,17 @@ public class FlinkPravegaReader<T>
     // The scope name of the destination stream.
     private final String scopeName;
 
+    private final Set<String> streamNames;
+
     // The readergroup name to coordinate the parallel readers. This should be unique for a Flink job.
     private final String readerGroupName;
+
+    private final ReaderGroupConfig readerGroupConfig;
 
     // the name of the reader, used to store state and resume existing state from savepoints
     private final String readerName;
 
-    // the timeout for reading events from Pravega 
+    // the timeout for reading events from Pravega
     private long eventReadTimeout = DEFAULT_EVENT_READ_TIMEOUT;
 
     // the timeout for call that initiates the Pravega checkpoint 
@@ -147,20 +152,21 @@ public class FlinkPravegaReader<T>
 
         this.controllerURI = controllerURI;
         this.scopeName = scope;
+        this.streamNames = Collections.unmodifiableSet(streamNames);
         this.deserializationSchema = deserializationSchema;
         this.readerGroupName = generateRandomReaderGroupName();
 
-        // TODO: This will require the client to have access to the pravega controller and handle any temporary errors.
-        //       See https://github.com/pravega/pravega/issues/553.
-        log.info("Creating reader group: {} for the Flink job", this.readerGroupName);
-
-        ReaderGroupConfig groupConfig = ReaderGroupConfig.builder()
+        this.readerGroupConfig = ReaderGroupConfig.builder()
                 .startingTime(startTime)
                 .disableAutomaticCheckpoints()
                 .build();
 
-        ReaderGroupManager.withScope(scope, controllerURI)
-                .createReaderGroup(this.readerGroupName, groupConfig, streamNames);
+        // TODO: This will require the client to have access to the pravega controller and handle any temporary errors.
+        //       See https://github.com/pravega/pravega/issues/553.
+        log.info("Creating reader group: {} for the Flink job", this.readerGroupName);
+        try (ReaderGroupManager readerGroupManager = ReaderGroupManager.withScope(scope, controllerURI)) {
+            readerGroupManager.createReaderGroup(this.readerGroupName, readerGroupConfig, streamNames);
+        }
     }
 
     // ------------------------------------------------------------------------
@@ -287,8 +293,9 @@ public class FlinkPravegaReader<T>
 
     @Override
     public MasterTriggerRestoreHook<Checkpoint> createMasterTriggerRestoreHook() {
-        return new ReaderCheckpointHook(this.readerName, this.readerGroupName,
-                this.scopeName, this.controllerURI, this.checkpointInitiateTimeout);
+        ReaderGroupManager readerGroupManager = ReaderGroupManager.withScope(this.scopeName, controllerURI);
+        return new ReaderCheckpointHook(this.readerName, readerGroupManager, this.readerGroupName, this.readerGroupConfig,
+               this.streamNames, this.checkpointInitiateTimeout);
     }
 
     @Override

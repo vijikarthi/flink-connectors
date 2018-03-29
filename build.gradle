@@ -37,6 +37,7 @@ repositories {
         }
     }
     else {
+        mavenLocal()
         jcenter()
         mavenCentral()
         maven {
