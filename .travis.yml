@@ -35,7 +35,7 @@ cache:
 stages:
   - name: build
   - name: snapshot
-    if: (branch = issue-141 AND type IS pull_request)
+    if: branch = issue-141 AND (type = pull_request)
 
 jobs:
   include:
