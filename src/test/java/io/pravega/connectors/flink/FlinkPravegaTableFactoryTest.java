@@ -14,7 +14,6 @@ import io.pravega.client.stream.Stream;
 import org.apache.flink.table.api.NoMatchingTableFactoryException;
 import org.apache.flink.table.api.Types;
 import org.apache.flink.table.api.ValidationException;
-import org.apache.flink.table.descriptors.DescriptorProperties;
 import org.apache.flink.table.descriptors.Json;
 import org.apache.flink.table.descriptors.Schema;
 import org.apache.flink.table.factories.StreamTableSinkFactory;
@@ -66,7 +65,7 @@ public class FlinkPravegaTableFactoryTest {
                 .withSchema(SCHEMA)
                 .inAppendMode();
 
-        final Map<String, String> propertiesMap = DescriptorProperties.toJavaMap(testDesc);
+        final Map<String, String> propertiesMap = testDesc.toProperties();
 
         FlinkPravegaTableFactoryBase tableFactoryBase = new FlinkPravegaStreamTableSourceFactory();
         tableFactoryBase.createFlinkPravegaTableSource(propertiesMap);
@@ -90,7 +89,7 @@ public class FlinkPravegaTableFactoryTest {
                 .withSchema(SCHEMA)
                 .inAppendMode();
 
-        final Map<String, String> propertiesMap = DescriptorProperties.toJavaMap(testDesc);
+        final Map<String, String> propertiesMap = testDesc.toProperties();
 
         FlinkPravegaTableFactoryBase tableFactoryBase = new FlinkPravegaStreamTableSourceFactory();
         tableFactoryBase.createFlinkPravegaTableSource(propertiesMap);
@@ -113,7 +112,7 @@ public class FlinkPravegaTableFactoryTest {
                 .withFormat(JSON)
                 .withSchema(SCHEMA);
 
-        final Map<String, String> propertiesMap = DescriptorProperties.toJavaMap(testDesc);
+        final Map<String, String> propertiesMap = testDesc.toProperties();
 
         final TableSource<?> source = TableFactoryService.find(StreamTableSourceFactory.class, propertiesMap)
                 .createStreamTableSource(propertiesMap);
@@ -135,7 +134,7 @@ public class FlinkPravegaTableFactoryTest {
                 .withSchema(SCHEMA)
                 .inAppendMode();
 
-        final Map<String, String> propertiesMap = DescriptorProperties.toJavaMap(testDesc);
+        final Map<String, String> propertiesMap = testDesc.toProperties();
         final TableSink<?> sink = TableFactoryService.find(StreamTableSinkFactory.class, propertiesMap)
                 .createStreamTableSink(propertiesMap);
         assertNotNull(sink);
@@ -158,7 +157,7 @@ public class FlinkPravegaTableFactoryTest {
                 .withSchema(SCHEMA)
                 .inAppendMode();
 
-        final Map<String, String> propertiesMap = DescriptorProperties.toJavaMap(testDesc);
+        final Map<String, String> propertiesMap = testDesc.toProperties();
         final TableSink<?> sink = TableFactoryService.find(StreamTableSinkFactory.class, propertiesMap)
                 .createStreamTableSink(propertiesMap);
         assertNotNull(sink);
@@ -179,7 +178,7 @@ public class FlinkPravegaTableFactoryTest {
                 .withSchema(SCHEMA)
                 .inAppendMode();
 
-        final Map<String, String> propertiesMap = DescriptorProperties.toJavaMap(testDesc);
+        final Map<String, String> propertiesMap = testDesc.toProperties();
         Map<String, String> test = new HashMap<>(propertiesMap);
         test.put(CONNECTOR_WRITER_MODE, "foo");
         final TableSink<?> sink = TableFactoryService.find(StreamTableSinkFactory.class, test)
@@ -202,7 +201,7 @@ public class FlinkPravegaTableFactoryTest {
                 .withSchema(SCHEMA)
                 .inAppendMode();
 
-        final Map<String, String> propertiesMap = DescriptorProperties.toJavaMap(testDesc);
+        final Map<String, String> propertiesMap = testDesc.toProperties();
         final TableSink<?> sink = TableFactoryService.find(StreamTableSinkFactory.class, propertiesMap)
                 .createStreamTableSink(propertiesMap);
         assertNotNull(sink);
@@ -223,7 +222,7 @@ public class FlinkPravegaTableFactoryTest {
                 .withSchema(SCHEMA)
                 .inAppendMode();
 
-        final Map<String, String> propertiesMap = DescriptorProperties.toJavaMap(testDesc);
+        final Map<String, String> propertiesMap = testDesc.toProperties();
         final TableSink<?> sink = TableFactoryService.find(StreamTableSinkFactory.class, propertiesMap)
                 .createStreamTableSink(propertiesMap);
         assertNotNull(sink);
@@ -243,7 +242,7 @@ public class FlinkPravegaTableFactoryTest {
                 .withSchema(SCHEMA)
                 .inAppendMode();
 
-        final Map<String, String> propertiesMap = DescriptorProperties.toJavaMap(testDesc);
+        final Map<String, String> propertiesMap = testDesc.toProperties();
         final TableSink<?> sink = TableFactoryService.find(StreamTableSinkFactory.class, propertiesMap)
                 .createStreamTableSink(propertiesMap);
         assertNotNull(sink);
@@ -263,7 +262,7 @@ public class FlinkPravegaTableFactoryTest {
                 .withFormat(JSON)
                 .inAppendMode();
 
-        final Map<String, String> propertiesMap = DescriptorProperties.toJavaMap(testDesc);
+        final Map<String, String> propertiesMap = testDesc.toProperties();
         final TableSink<?> sink = TableFactoryService.find(StreamTableSinkFactory.class, propertiesMap)
                 .createStreamTableSink(propertiesMap);
         assertNotNull(sink);
