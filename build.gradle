@@ -11,6 +11,7 @@
 
 buildscript {
     repositories {
+        maven { url 'http://repo1.maven.org/maven2' }
         jcenter()
         mavenCentral()
         maven {
@@ -23,11 +24,27 @@ buildscript {
         classpath group: 'org.hidetake', name: 'gradle-ssh-plugin', version: gradleSshPluginVersion
         classpath "ru.vyarus:gradle-mkdocs-plugin:${gradleMkdocsPluginVersion}"
         classpath "gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:${spotbugsPluginVersion}"
+
+        classpath "com.github.hierynomus.license-report:com.github.hierynomus.license-report.gradle.plugin:0.15.0"
+        classpath 'com.github.hierynomus.license:com.github.hierynomus.license.gradle.plugin:0.15.0'
+        classpath 'com.github.hierynomus.license-base:com.github.hierynomus.license-base.gradle.plugin:0.15.0'
+
+        classpath 'com.github.jk1:gradle-license-report:1.6'
     }
 }
 plugins {
-    id "com.github.spotbugs" 
+    id "com.github.spotbugs"
+
+    id "com.github.hierynomus.license-report" version "0.15.0"
+    id "com.github.hierynomus.license" version "0.15.0"
+    id "com.github.hierynomus.license-base" version "0.15.0"
+
+    id 'com.github.jk1.dependency-license-report' version '1.6'
  }
+
+apply plugin: 'com.github.jk1.dependency-license-report'
+
+
 apply plugin: 'eclipse'
 apply from: 'gradle/idea.gradle'
 apply from: 'gradle/java.gradle'
@@ -40,6 +57,52 @@ apply plugin: 'org.ajoberstar.grgit'
 apply from: 'gradle/mkdocs.gradle'
 apply from: 'gradle/jacoco.gradle'
 
+downloadLicenses {
+    dependencyConfiguration 'annotationProcessor'
+    includeProjectDependencies true
+}
+
+licenseReport {
+    /*
+    configurations = ['checkstyle','compile','compileClasspath','compileOnly','default','findbugs',
+                      'jacocoAgent','jacocoAnt','runtime','runtimeClasspath','shadowOnly','testCompile',
+                      'testCompileClasspath','testRuntime','testRuntimeClasspath']
+     */
+    configurations = ['annotationProcessor']
+}
+
+
+/**
+ To get all the configurations run the following commands
+ ./gradlew --console plain dependencies | fgrep ' - '
+
+ annotationProcessor - Annotation processors and their dependencies for source set 'main'.
+ apiElements - API elements for main. (n)
+ archives - Configuration for archive artifacts.
+ checkstyle - The Checkstyle libraries to be used for this project.
+ compile - Dependencies for source set 'main' (deprecated, use 'implementation' instead).
+ compileClasspath - Compile classpath for source set 'main'.
+ compileOnly - Compile only dependencies for source set 'main'.
+ default - Configuration for default artifacts.
+ implementation - Implementation only dependencies for source set 'main'. (n)
+ jacocoAgent - The Jacoco agent to use to get coverage data.
+ jacocoAnt - The Jacoco ant tasks to use to get execute Gradle tasks.
+ runtime - Runtime dependencies for source set 'main' (deprecated, use 'runtimeOnly' instead).
+ runtimeClasspath - Runtime classpath of source set 'main'.
+ runtimeElements - Elements of runtime for main. (n)
+ runtimeOnly - Runtime only dependencies for source set 'main'. (n)
+ spotbugs - The SpotBugs libraries to be used for this project.
+ spotbugsPlugins - The SpotBugs plugins to be used for this project.
+ testAnnotationProcessor - Annotation processors and their dependencies for source set 'test'.
+ testCompile - Dependencies for source set 'test' (deprecated, use 'testImplementation' instead).
+ testCompileClasspath - Compile classpath for source set 'test'.
+ testCompileOnly - Compile only dependencies for source set 'test'.
+ testImplementation - Implementation only dependencies for source set 'test'. (n)
+ testRuntime - Runtime dependencies for source set 'test' (deprecated, use 'testRuntimeOnly' instead).
+ testRuntimeClasspath - Runtime classpath of source set 'test'.
+ testRuntimeOnly - Runtime only dependencies for source set 'test'. (n)
+
+ */
 tasks.withType(com.github.spotbugs.SpotBugsTask) {
      reports {
         xml.enabled = false
